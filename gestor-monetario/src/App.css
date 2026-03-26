@@ -1,0 +1,447 @@
+/* src/App.css */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, sans-serif;
+}
+
+/* src/App.css */
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #f3f4f6; /* Cor de fundo nativa */
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  background-color: white;
+  width: 100vw;
+  height: 100dvh; /* dvh resolve o bug da barra do Safari/Chrome no telemóvel */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Se alguém abrir no PC, mostramos em formato telemóvel no centro do ecrã */
+@media (min-width: 600px) {
+  body {
+    background-color: #111827;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+  }
+  .container {
+    width: 400px;
+    height: 85vh;
+    max-height: 850px;
+    border-radius: 30px;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+  }
+}
+
+/* --- ECRÃ DE LOGIN --- */
+.login-centro {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 40px 30px;
+}
+
+.login-centro h1 {
+  font-size: 32px;
+  font-weight: 900;
+  color: #1e3a8a;
+  text-align: center;
+  margin-bottom: 40px;
+  line-height: 1.1;
+}
+
+.login-centro h1 span {
+  color: #3b82f6; /* Azul mais claro para 'MONETÁRIO' */
+  display: block;
+}
+
+.area-input-login {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.area-input-login input {
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  background-color: #f9fafb;
+  font-size: 16px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.area-input-login input:focus {
+  border-color: #3b82f6;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+.btn-principal {
+  background-color: #3b82f6;
+  color: white;
+  padding: 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+  margin-top: 10px;
+}
+
+.btn-principal:hover {
+  background-color: #2563eb;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: #6b7280;
+  font-size: 15px;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 10px;
+}
+
+/* --- ECRÃ DA APP (Para depois do Login) --- */
+.cabecalho {
+  background-color: #3b82f6;
+  color: white;
+  padding: 24px;
+  text-align: center;
+}
+.user-info { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 12px; opacity: 0.9; align-items: center; }
+.user-info button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 4px 10px; border-radius: 6px; cursor: pointer; }
+.cabecalho h1 { font-size: 14px; opacity: 0.8; margin-bottom: 4px; font-weight: normal; }
+.cabecalho h2 { font-size: 38px; }
+
+.transacoes { flex: 1; padding: 20px; background-color: #f3f4f6; overflow-y: auto; }
+#lista-transacoes li { background-color: white; padding: 16px; border-radius: 16px; margin-bottom: 12px; list-style: none; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.02); border-left: 4px solid #3b82f6; }
+.valor-e-acoes { display: flex; align-items: center; gap: 12px; }
+.entrada { color: #10b981; font-size: 16px; }
+.saida { color: #ef4444; font-size: 16px; }
+.btn-apagar { background-color: #fee2e2; color: #ef4444; border: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+
+/* --- ZONA INFERIOR FIXA (RODAPÉ) --- */
+.cabecalho, .area-input {
+  flex-shrink: 0; /* Garante que nem o topo nem o rodapé são empurrados para fora da tela */
+}
+
+.area-input { 
+  background-color: white; 
+  padding: 16px; 
+  border-top: 1px solid #e5e7eb; 
+  display: flex; 
+  gap: 8px; /* Espaço entre os botões */
+  width: 100%;
+}
+
+.area-input select, .area-input input { 
+  padding: 12px; 
+  border-radius: 10px; 
+  border: 1px solid #e5e7eb; 
+  background-color: #f9fafb; 
+  outline: none; 
+  min-width: 0; /* TRUQUE MÁGICO: Permite que os inputs encolham se o telemóvel for muito estreito */
+}
+
+.area-input select {
+  width: 50px; /* Pequeno, só para o símbolo + ou - */
+  padding: 12px 5px; /* Ajusta o padding interno para caber bem */
+}
+
+.area-input input[type="text"] { 
+  flex: 2; /* A razão ocupa o dobro do espaço do valor */
+}
+
+.area-input input[type="number"] { 
+  flex: 1.2; /* O valor ocupa o resto do espaço */
+}
+
+#botao-enviar { 
+  background-color: #3b82f6; 
+  color: white; 
+  border: none; 
+  padding: 0 16px; 
+  border-radius: 10px; 
+  font-weight: bold; 
+  cursor: pointer; 
+  flex-shrink: 0; /* O botão OK NUNCA encolhe, mantém a sua forma fixa */
+}
+
+#botao-enviar:hover {
+  background-color: #2563eb;
+}
+
+/* --- MENU LATERAL (SIDEBAR) --- */
+.btn-menu {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 5px;
+}
+
+.cabecalho-topo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+/* Fundo escuro quando o menu abre */
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: 0.3s;
+}
+
+.overlay.aberto {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* A gaveta lateral */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: -280px; /* Escondido fora do ecrã à esquerda */
+  width: 280px;
+  height: 100vh;
+  background-color: white;
+  z-index: 999;
+  box-shadow: 2px 0 15px rgba(0,0,0,0.2);
+  transition: left 0.3s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar.aberto {
+  left: 0; /* Desliza para dentro do ecrã */
+}
+
+.sidebar-header {
+  background-color: #1e3a8a;
+  color: white;
+  padding: 20px;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.lista-contas {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 0;
+}
+
+.item-conta {
+  padding: 15px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between; 
+  cursor: pointer;
+  border-bottom: 1px solid #f3f4f6;
+  font-size: 16px;
+  color: #374151;
+  transition: 0.2s;
+}
+
+.item-conta:hover { background-color: #f9fafb; }
+.item-conta.ativa { background-color: #eff6ff; color: #2563eb; font-weight: bold; border-left: 4px solid #2563eb; }
+
+.btn-nova-conta {
+  margin: 20px;
+  padding: 15px;
+  background-color: #f3f4f6;
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  color: #4b5563;
+  font-weight: bold;
+  cursor: pointer;
+  text-align: center;
+}
+
+.btn-nova-conta:hover {
+  background-color: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+/* O novo botão do lixo */
+.btn-apagar-conta {
+  background: none;
+  border: none;
+  color: #ef4444; /* Cor vermelha para o SVG (o stroke="currentColor" vai usar esta cor) */
+  cursor: pointer;
+  opacity: 0.5; /* Fica meio transparente para não chamar demasiada atenção */
+  transition: all 0.2s ease;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-apagar-conta:hover {
+  opacity: 1; /* Fica um vermelho forte quando passas o rato/dedo */
+  transform: scale(1.15); /* Dá um saltinho maior */
+  color: #dc2626; /* Fica um vermelho ligeiramente mais escuro no hover */
+}
+
+/* =========================================
+  🌙 MODO ESCURO (DARK MODE)
+  ========================================= */
+
+  body.dark {
+  background-color: #111827; /* Fundo principal muito escuro */
+  color: #f9fafb; /* Texto branco/cinza claro */
+}
+
+/* O fundo do telemóvel */
+body.dark .container {
+  background-color: #1f2937;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+}
+
+/* Menu Lateral Escuro */
+body.dark .sidebar {
+  background-color: #1f2937;
+  border-right: 1px solid #374151;
+  color: #f9fafb;
+}
+
+body.dark .item-conta {
+  color: #d1d5db;
+  border-bottom: 1px solid #374151;
+}
+
+body.dark .item-conta:hover,
+body.dark .item-conta.ativa {
+  background-color: #374151;
+}
+
+/* O Cabeçalho (Podes manter azul ou torná-lo mais escuro. Aqui faço um degradê azul marinho) */
+body.dark .cabecalho {
+  background: linear-gradient(135deg, #1e3a8a, #312e81);
+}
+
+/* Área central de movimentos */
+body.dark .transacoes {
+  background-color: #111827;
+}
+
+/* As Tabs de cima (Movimentos vs Estatísticas) */
+body.dark .transacoes > div:first-child {
+  background-color: #1f2937 !important;
+  border-bottom: 1px solid #374151 !important;
+}
+
+/* Lista de movimentos escurecida */
+body.dark #lista-transacoes li {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  color: #f9fafb;
+}
+
+body.dark #lista-transacoes li span[style*="color: #6b7280"] {
+  color: #9ca3af !important; /* Clarear as categorias pequenas */
+}
+
+/* Formulário Inferior */
+body.dark .area-input {
+  background-color: #1f2937;
+  border-top: 1px solid #374151;
+}
+
+body.dark input, 
+body.dark select {
+  background-color: #374151;
+  color: #f9fafb;
+  border: 1px solid #4b5563;
+}
+
+body.dark input::placeholder {
+  color: #9ca3af;
+}
+
+/* Área das Estatísticas */
+body.dark .area-estatisticas h3 {
+  color: #f9fafb !important;
+}
+
+body.dark .area-estatisticas div[style*="color: #4b5563"] {
+  color: #d1d5db !important;
+}
+
+/* =========================================
+   🔘 TOGGLE SWITCH (INTERRUPTOR)
+   ========================================= */
+   .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+  }
+  
+  .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+  
+  .toggle-switch .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #d1d5db; /* Cor quando está desligado (Claro) */
+    transition: .3s;
+  }
+  
+  .toggle-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  /* Quando está ativo (Modo Escuro) */
+  .toggle-switch input:checked + .slider {
+    background-color: #3b82f6; /* O nosso azul principal */
+  }
+  
+  .toggle-switch input:checked + .slider:before {
+    transform: translateX(22px);
+  }
+  
+  /* Bordas arredondadas */
+  .toggle-switch .slider.round {
+    border-radius: 24px;
+  }
+  
+  .toggle-switch .slider.round:before {
+    border-radius: 50%;
+  }

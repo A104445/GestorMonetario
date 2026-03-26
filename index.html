@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="pt">
+    <head>
+        <meta charset="UTF-8">
+        <title>Gestor Monetario</title>
+        <link rel="stylesheet" href="style.css">
+    </head>
+    <body>
+        <div class="container">
+            <div class="cabecalho">
+                <h1>Saldo Atual:</h1>
+                <h2 id="valor-saldo">0,00€</h2>
+            </div>
+
+            <div class="transacoes">
+                <h3>
+                    <ul id="lista-transacoes">
+                        <li class="mensagem-vazia">Ainda sem movimentos</li>
+                    </ul>
+                </h3>
+            </div>
+
+            <div class="registo">
+                <select id="tipo-transacao">
+                    <option value="entrada">+</option>
+                    <option value="saida">-</option>
+                </select>
+                <input type="text" id="caixa-razao" placeholder="Razão (ex: Salário)">
+
+                <input type="number" id="caixa-valor" placeholder="0.00">                
+                
+                <button id="botao-enviar">Registar</button>
+            </div>
+        </div>
+
+        <script src="script.js"></script>
+    </body>
+</html>

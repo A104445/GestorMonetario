@@ -1,0 +1,141 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+}
+
+body {
+    background-color: #1f2937;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh; 
+}
+
+.container {
+    background-color: white;
+    width: 95%;           
+    max-width: 450px;     
+    height: 90vh;         
+    border-radius: 24px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+}
+
+.cabecalho {
+    background-color: #2563eb;
+    color: white;
+    padding: 24px;
+    text-align: center;
+}
+.cabecalho h1 { font-size: 14px; text-transform: uppercase; opacity: 0.8; margin-bottom: 8px;}
+.cabecalho h2 { font-size: 36px; }
+
+.transacoes {
+    flex: 1; 
+    padding: 24px;
+    background-color: #f9fafb;
+    overflow-y: auto; 
+}
+.transacoes h3 { color: #6b7280; font-size: 14px; margin-bottom: 16px; }
+.mensagem-vazia { color: #9ca3af; text-align: center; margin-top: 40px; font-size: 14px; list-style: none; }
+
+.registo {
+    background-color: white;
+    padding: 16px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 8px; 
+}
+#caixa-texto {
+    flex: 1;
+    background-color: #f3f4f6;
+    border: none;
+    border-radius: 20px;
+    padding: 10px 16px;
+    outline: none;
+}
+#botao-enviar {
+    background-color: #2563eb;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+#botao-enviar:hover { background-color: #1d4ed8; } 
+
+#lista-transacoes li {
+    background-color: white;
+    padding: 12px;
+    border-radius: 12px;
+    border-left: 4px solid #2563eb;
+    margin-bottom: 8px;
+    list-style: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.area-input {
+    background-color: white;
+    padding: 12px;
+    border-top: 1px solid #e5e7eb;
+    display: flex;
+    gap: 8px;           /* Espaço entre os elementos */
+    align-items: center;
+}
+
+#tipo-transacao {
+    width: 45px;        /* Tamanho fixo para o + / - */
+    flex-shrink: 0;     /* Impede que este campo encolha demais */
+}
+
+#caixa-razao {
+    flex: 3;            /* A razão ganha 3x mais espaço que os outros */
+    min-width: 0;       /* TRUQUE: permite que o input encolha abaixo do padrão */
+}
+
+#caixa-valor {
+    flex: 1.5;          /* O valor ganha um pouco de espaço */
+    min-width: 0;
+}
+
+#botao-enviar {
+    flex-shrink: 0;     /* O botão nunca encolhe, mantém o seu tamanho original */
+    padding: 10px 15px;
+}
+
+@media (min-width: 768px) {
+    .telemovel-container {
+        height: 600px; /* Em PCs, não precisa de ser tão alto */
+    }
+}
+
+#lista-transacoes li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn-apagar {
+    background-color: #fee2e2;
+    color: #ef4444;
+    border: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.2s;
+}
+
+.btn-apagar:hover {
+    background-color: #ef4444;
+    color: white;
+}
