@@ -44,11 +44,16 @@ export function useFinance(contaId) {
     if (!error) carregarDados() // Atualiza a lista após apagar
   }
 
+  const editarTransacao = async (id, dadosAtualizados) => {
+    const { error } = await supabase.from('transacoes').update(dadosAtualizados).eq('id', id)
+    if (!error) carregarDados()
+  }
+
   // 3. A MAGIA ACONTECE AQUI: 
   // Sempre que o contaId mudar, ele corre o carregarDados() outra vez!
   useEffect(() => { 
     carregarDados() 
   }, [contaId])
 
-  return { transacoes, carregando, adicionarTransacao, removerTransacao }
+  return { transacoes, carregando, adicionarTransacao, removerTransacao, editarTransacao }
 }

@@ -41,8 +41,8 @@ body {
   }
 }
 
-/* --- ECRÃ DE LOGIN --- */
-.login-centro {
+/* --- LOGIN MODERNO --- */
+.login-centro-moderno {
   height: 100%;
   display: flex;
   flex-direction: column;
@@ -50,18 +50,80 @@ body {
   padding: 40px 30px;
 }
 
-.login-centro h1 {
-  font-size: 32px;
+.login-header-logo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.icone-logo {
+  font-size: 55px;
+  margin-bottom: 5px;
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+}
+
+.login-header-logo h1 {
+  font-size: 28px;
   font-weight: 900;
   color: #1e3a8a;
-  text-align: center;
-  margin-bottom: 40px;
   line-height: 1.1;
 }
 
-.login-centro h1 span {
-  color: #3b82f6; /* Azul mais claro para 'MONETÁRIO' */
+.login-header-logo h1 span {
+  color: #3b82f6;
   display: block;
+}
+
+body.dark .login-header-logo h1 { color: #f9fafb; }
+
+/* Seletor de Abas (Pills) */
+.seletor-abas {
+  display: flex;
+  background-color: #f3f4f6;
+  border-radius: 12px;
+  padding: 6px;
+  margin-bottom: 25px;
+}
+
+body.dark .seletor-abas { background-color: #374151; }
+
+.seletor-abas button {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-weight: bold;
+  color: #6b7280;
+  cursor: pointer;
+  transition: 0.3s;
+  font-size: 15px;
+}
+
+body.dark .seletor-abas button { color: #9ca3af; }
+
+.seletor-abas button.aba-ativa {
+  background-color: white;
+  color: #3b82f6;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+body.dark .seletor-abas button.aba-ativa {
+  background-color: #1f2937;
+  color: #3b82f6;
+}
+
+/* Inputs com ícone */
+.input-grupo {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-icone {
+  position: absolute;
+  left: 15px;
+  font-size: 18px;
+  pointer-events: none; /* Não atrapalha o clique */
 }
 
 .area-input-login {
@@ -71,19 +133,31 @@ body {
 }
 
 .area-input-login input {
-  padding: 16px;
+  width: 100%;
+  padding: 16px 16px 16px 45px; /* Espaço maior à esquerda para o ícone */
   border-radius: 12px;
   border: 1px solid #d1d5db;
   background-color: #f9fafb;
-  font-size: 16px;
+  font-size: 15px;
   outline: none;
   transition: 0.2s;
+  box-sizing: border-box;
+}
+
+body.dark .area-input-login input {
+  background-color: #1f2937;
+  border-color: #4b5563;
+  color: white;
 }
 
 .area-input-login input:focus {
   border-color: #3b82f6;
   background-color: white;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+body.dark .area-input-login input:focus {
+  background-color: #111827;
 }
 
 .btn-principal {
@@ -445,3 +519,155 @@ body.dark .area-estatisticas div[style*="color: #4b5563"] {
   .toggle-switch .slider.round:before {
     border-radius: 50%;
   }
+
+/* As caixas de sucesso e erro na página de Login */
+.msg-erro {
+  background-color: #fee2e2;
+  color: #ef4444;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+}
+
+.msg-sucesso {
+  background-color: #d1fae5;
+  color: #10b981;
+  padding: 12px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  font-weight: bold;
+  text-align: center;
+}
+
+/* =========================================
+   🛑 MODAIS (POPUPS PROFISSIONAIS)
+   ========================================= */
+
+   .modal-overlay {
+    position: absolute; 
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    backdrop-filter: blur(3px); 
+    border-radius: inherit; 
+  }
+  
+  .modal-box {
+    background-color: white;
+    width: 100%;
+    max-width: 320px;
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: modalAparecer 0.2s ease-out;
+  }
+  
+  body.dark .modal-box { background-color: #1f2937; color: #f9fafb; }
+  .modal-box h3 { margin-bottom: 10px; color: #1f2937; font-size: 20px; }
+  body.dark .modal-box h3 { color: white; }
+  .modal-box p { color: #6b7280; font-size: 15px; margin-bottom: 20px; line-height: 1.5; }
+  body.dark .modal-box p { color: #9ca3af; }
+  
+  .modal-box input {
+    width: 100%; padding: 14px; margin-bottom: 20px;
+    border: 1px solid #d1d5db; border-radius: 10px; font-size: 16px; outline: none;
+    box-sizing: border-box;
+  }
+  
+  body.dark .modal-box input { background-color: #374151; border-color: #4b5563; color: white; }
+  .modal-box input:focus { border-color: #3b82f6; }
+  
+  .modal-botoes { display: flex; gap: 10px; }
+  .modal-botoes button { flex: 1; padding: 12px; border-radius: 10px; font-weight: bold; cursor: pointer; border: none; font-size: 15px; transition: 0.2s; }
+  
+  .btn-cancelar { background-color: #f3f4f6; color: #4b5563; }
+  .btn-cancelar:hover { background-color: #e5e7eb; }
+  body.dark .btn-cancelar { background-color: #374151; color: #d1d5db; }
+  
+  .btn-confirmar { background-color: #3b82f6; color: white; }
+  .btn-confirmar:hover { background-color: #2563eb; }
+  
+  .btn-perigo { background-color: #fee2e2; color: #ef4444; }
+  .btn-perigo:hover { background-color: #fecaca; }
+  body.dark .btn-perigo { background-color: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+  
+  @keyframes modalAparecer {
+    from { opacity: 0; transform: scale(0.9); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  /* =========================================
+   🔍 BARRA DE PESQUISA E EXPORTAR
+   ========================================= */
+
+.barra-ferramentas {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.input-pesquisa-container {
+  flex: 1;
+  position: relative;
+}
+
+.input-pesquisa-container span {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  font-size: 16px;
+}
+
+.input-pesquisa {
+  width: 100%;
+  padding: 12px 12px 12px 40px; /* Mais espaço à esquerda para o ícone */
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  outline: none;
+  background-color: #f9fafb;
+  font-size: 15px;
+  box-sizing: border-box;
+  transition: 0.2s;
+}
+
+body.dark .input-pesquisa {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: white;
+}
+
+.input-pesquisa:focus {
+  border-color: #3b82f6;
+  background-color: white;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+body.dark .input-pesquisa:focus {
+  background-color: #111827;
+}
+
+.btn-exportar {
+  background-color: #10b981;
+  color: white;
+  border: none;
+  padding: 0 15px;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-exportar:hover {
+  background-color: #059669;
+}
