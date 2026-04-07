@@ -35,6 +35,52 @@ function App() {
   const [temaEscuro, setTemaEscuro] = useState(() => localStorage.getItem('tema') === 'escuro');
   const [vistaEstatisticas, setVistaEstatisticas] = useState('barras');
 
+  // --- INÍCIO DO CÁLCULO DE SALDOS ---
+  const [saldosContas, setSaldosContas] = useState({});
+
+  async function carregarSaldosTotais() {
+    // Só avança se já tivermos a sessão iniciada e as contas carregadas
+    if (!session || contas.length === 0) return;
+    
+    // 1. Criamos a lista com os IDs das tuas contas
+    const idsDasContas = contas.map(c => c.id);
+    
+    // 2. Pedimos ao Supabase SÓ os movimentos que pertencem a estas contas
+    const { data, error } = await supabase
+      .from('transacoes')
+      .select('conta_id, valor, tipo')
+      .in('conta_id', idsDasContas);
+
+    if (error) {
+      console.error("Erro ao carregar saldos:", error);
+      return;
+    }
+
+    // 3. Inicializamos todas as tuas contas a 0€ para evitar erros
+    const mapaSaldos = {};
+    contas.forEach(c => { mapaSaldos[c.id] = 0; });
+
+    // 4. Fazemos a matemática (e garantimos que o valor é lido como número)
+    if (data) {
+      data.forEach(t => {
+        const valorNumerico = parseFloat(t.valor) || 0;
+        if (t.tipo === 'entrada') {
+          mapaSaldos[t.conta_id] += valorNumerico;
+        } else {
+          mapaSaldos[t.conta_id] -= valorNumerico;
+        }
+      });
+    }
+
+    setSaldosContas(mapaSaldos);
+  }
+
+  // O useEffect agora "ouve" também as "contas". Assim que elas carregam, ele calcula!
+  useEffect(() => {
+    carregarSaldosTotais();
+  }, [session, transacoes, contas]); 
+  // --- FIM DO CÁLCULO DE SALDOS ---
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => setSession(session));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => setSession(session));
@@ -159,7 +205,7 @@ function App() {
 
   return (
     <div className="container" style={{ position: 'relative' }}>
-      <Sidebar menuAberto={menuAberto} setMenuAberto={setMenuAberto} contas={contas} contaId={contaId} mudarConta={(id) => { setContaId(id); setMenuAberto(false); }} apagarConta={apagarConta} criarNovaConta={criarNovaConta} temaEscuro={temaEscuro} setTemaEscuro={setTemaEscuro} />
+      <Sidebar menuAberto={menuAberto} setMenuAberto={setMenuAberto} contas={contas} contaId={contaId} mudarConta={(id) => { setContaId(id); setMenuAberto(false); }} apagarConta={apagarConta} criarNovaConta={criarNovaConta} temaEscuro={temaEscuro} setTemaEscuro={setTemaEscuro} saldos={saldosContas} />
       <Header email={session.user.email} nomeConta={contaAtiva ? contaAtiva.nome : 'A carregar...'} saldoTotal={saldoTotal} setMenuAberto={setMenuAberto} mesAtivo={mesAtivo} setMesAtivo={setMesAtivo} anoAtivo={anoAtivo} setAnoAtivo={setAnoAtivo} nomeMeses={nomeMeses} verTodos={verTodos} setVerTodos={setVerTodos} />
 
       <div className="transacoes" style={{ display: 'flex', flexDirection: 'column', padding: 0 }}>

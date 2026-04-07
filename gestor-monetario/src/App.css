@@ -671,3 +671,25 @@ body.dark .input-pesquisa:focus {
 .btn-exportar:hover {
   background-color: #059669;
 }
+
+.item-conta-info {
+  display: flex;
+  flex-direction: column; /* Coloca o saldo por baixo do nome */
+  gap: 2px;
+}
+
+.nome-conta {
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.saldo-conta {
+  font-size: 13px;
+  color: #6b7280; /* Tom mais claro (cinzento) */
+  font-weight: normal;
+}
+
+/* No Modo Escuro o saldo deve ser um pouco mais claro para se ler bem */
+body.dark .saldo-conta {
+  color: #9ca3af;
+}
