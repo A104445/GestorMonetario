@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { supabase } from './services/supabase';
 import { useFinance } from './hooks/useFinance';
 import { Login } from './components/Login';
@@ -17,9 +17,20 @@ function App() {
   const [modalNovaConta, setModalNovaConta] = useState(false);
   const [nomeNovaConta, setNomeNovaConta] = useState('');
   const [modalApagar, setModalApagar] = useState({ aberto: false, id: null, nome: '' });
+  const [modalDefinicoes, setModalDefinicoes] = useState(false);
 
   const { transacoes, carregando, adicionarTransacao, removerTransacao, editarTransacao } = useFinance(contaId);
   const [form, setForm] = useState({ razao: '', valor: '', tipo: 'saida', categoria: '❓ Outros' });
+
+  const modoFutebol = session ? session.user.email.includes('futebol') : false;
+
+  // Quando a app deteta que estás no futebol, muda logo as caixas para Entrada (+) e para a 1ª pessoa!
+  useEffect(() => {
+    if (modoFutebol) {
+      setForm(f => ({ ...f, tipo: 'entrada' })); // Se o 1º da tua lista for outro nome, podes trocar o "Eu"
+    }
+  }, [modoFutebol]);
+  
   const [movimentoEmEdicao, setMovimentoEmEdicao] = useState(null);
   
   // --- NOVO: ESTADO DA PESQUISA ---
@@ -28,11 +39,20 @@ function App() {
   const listaCategorias = ['🛒 Supermercado', '🚗 Transporte', '🏠 Casa', '🍿 Lazer', '🍔 Restauração', '🏥 Saúde', '💼 Salário', '❓ Outros'];
   const nomeMeses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
 
+  // --- NOVA LISTA: O PESSOAL DO FUTEBOL ---
+  const listaPessoalFutebol = [
+    '👤 Eu', '👤 João', '👤 Diogo', '👤 Rui', '👤 Miguel', 
+    '👤 Pedro', '👤 Carlos', '⚽ Aluguer Campo', '❓ Outros'
+  ];
+
   const [mesAtivo, setMesAtivo] = useState(new Date().getMonth());
   const [anoAtivo, setAnoAtivo] = useState(new Date().getFullYear());
   const [verTodos, setVerTodos] = useState(false);
   const [abaAtiva, setAbaAtiva] = useState('movimentos');
   const [temaEscuro, setTemaEscuro] = useState(() => localStorage.getItem('tema') === 'escuro');
+  const [moeda, setMoeda] = useState(() => localStorage.getItem('moeda') || '€');
+  const [novoNomeConta, setNovoNomeConta] = useState('');
+  useEffect(() => { localStorage.setItem('moeda', moeda); }, [moeda]);
   const [vistaEstatisticas, setVistaEstatisticas] = useState('barras');
 
   // --- INÍCIO DO CÁLCULO DE SALDOS ---
@@ -94,23 +114,91 @@ function App() {
     else { document.body.classList.remove('dark'); localStorage.setItem('tema', 'claro'); }
   }, [temaEscuro]);
 
+  // Cadeado de segurança!
+  const criandoConta = useRef(false);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setModalDefinicoes(false);
+    setMenuAberto(false);
+  };
+
   async function carregarContas() {
     let { data, error } = await supabase.from('contas').select('*').eq('user_id', session.user.id).order('nome', { ascending: true });
     if (error) return setAvisoMsg("Erro ao ler as tuas contas.");
-    if (data && data.length > 0) { setContas(data); if (!contaId) setContaId(data[0].id); } 
-    else {
+    
+    if (data && data.length > 0) { 
+      setContas(data); 
+      if (!contaId) setContaId(data[0].id); 
+    } else {
+      if (criandoConta.current) return;
+      criandoConta.current = true;
+
+      // Mantemos o nome padrão original para todas as contas novas!
       const { data: novaConta } = await supabase.from('contas').insert([{ user_id: session.user.id, nome: 'Carteira Principal' }]).select().single();
-      if (novaConta) { setContas([novaConta]); setContaId(novaConta.id); }
+      
+      if (novaConta) { 
+        setContas([novaConta]); 
+        setContaId(novaConta.id); 
+      }
+      criandoConta.current = false;
     }
   }
 
-  function criarNovaConta() { setNomeNovaConta(''); setModalNovaConta(true); setMenuAberto(false); }
-  async function confirmarNovaConta(e) {
+  // 1. Adiciona este estado perto dos outros modais (linha 22 aprox.)
+  const [idContaRenomear, setIdContaRenomear] = useState(null);
+
+  // 2. Atualiza a função criarNovaConta para garantir que limpamos o ID
+  function criarNovaConta() { 
+    setIdContaRenomear(null); 
+    setNomeNovaConta(''); 
+    setModalNovaConta(true); 
+    setMenuAberto(false); 
+  }
+
+  // 3. Atualiza a função renomearConta para abrir o modal
+  function renomearConta(id, nomeAtual) {
+    setIdContaRenomear(id);
+    setNomeNovaConta(nomeAtual);
+    setModalNovaConta(true);
+    setMenuAberto(false);
+  }
+
+  // 4. Atualiza a confirmação para lidar com os dois casos (Criar ou Editar)
+  async function confirmarAcaoConta(e) {
     e.preventDefault();
-    if (!nomeNovaConta) return;
-    const { data, error } = await supabase.from('contas').insert([{ user_id: session.user.id, nome: nomeNovaConta }]).select().single();
-    if (!error && data) { setContas([...contas, data]); setContaId(data.id); setModalNovaConta(false); } 
-    else { setAvisoMsg("Erro ao criar conta."); }
+    if (!nomeNovaConta || nomeNovaConta.trim() === '') return;
+
+    if (idContaRenomear) {
+      // CASO: RENOMEAR
+      const { error } = await supabase
+        .from('contas')
+        .update({ nome: nomeNovaConta })
+        .eq('id', idContaRenomear);
+
+      if (!error) {
+        setContas(contas.map(c => c.id === idContaRenomear ? { ...c, nome: nomeNovaConta } : c));
+        setModalNovaConta(false);
+        setIdContaRenomear(null);
+      } else {
+        setAvisoMsg("Erro ao renomear a conta.");
+      }
+    } else {
+      // CASO: NOVA CONTA
+      const { data, error } = await supabase
+        .from('contas')
+        .insert([{ user_id: session.user.id, nome: nomeNovaConta }])
+        .select()
+        .single();
+
+      if (!error && data) {
+        setContas([...contas, data]);
+        setContaId(data.id);
+        setModalNovaConta(false);
+      } else {
+        setAvisoMsg("Erro ao criar conta.");
+      }
+    }
   }
 
   function apagarConta(idParaApagar, nomeDaConta) {
@@ -138,23 +226,39 @@ function App() {
     (t.categoria && t.categoria.toLowerCase().includes(termoPesquisa.toLowerCase()))
   );
 
-  const estatisticas = Object.entries(transacoesVisiveis.filter(t => t.tipo === 'saida').reduce((acc, t) => {
-    const cat = t.categoria || '❓ Outros'; acc[cat] = (acc[cat] || 0) + t.valor; return acc;
-  }, {})).map(([nome, total]) => ({ nome, total })).sort((a, b) => b.total - a.total);
-  const totalDespesas = estatisticas.reduce((acc, cat) => acc + cat.total, 0);
+// --- MAGIA DAS ESTATÍSTICAS (Entradas no Futebol, Saídas no Normal) ---
+const tipoEstatistica = modoFutebol ? 'entrada' : 'saida';
+
+const estatisticas = Object.entries(transacoesVisiveis.filter(t => t.tipo === tipoEstatistica).reduce((acc, t) => {
+  const cat = t.categoria || '❓ Outros'; acc[cat] = (acc[cat] || 0) + t.valor; return acc;
+}, {})).map(([nome, total]) => ({ nome, total })).sort((a, b) => b.total - a.total);
+
+const totalDespesas = estatisticas.reduce((acc, cat) => acc + cat.total, 0);
 
   // Formulário
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!form.razao || !form.valor || !contaId) return;
+    
+    // --- LÓGICA INTELIGENTE DA RAZÃO ---
+    let razaoFinal = form.razao;
+    
+    // Se for futebol e a categoria não for "Outro", criamos a razão sozinhos!
+    if (modoFutebol && form.categoria !== '❓ Outros') {
+      razaoFinal = form.tipo === 'entrada' ? `Pagamento de ${form.categoria}` : form.categoria;
+    }
+
+    // Se não houver razão, valor ou conta, não avança
+    if (!razaoFinal || !form.valor || !contaId) return;
 
     if (movimentoEmEdicao) {
-      editarTransacao(movimentoEmEdicao, { ...form, valor: parseFloat(form.valor) });
+      editarTransacao(movimentoEmEdicao, { ...form, razao: razaoFinal, valor: parseFloat(form.valor) });
       setMovimentoEmEdicao(null);
     } else {
-      adicionarTransacao({ ...form, valor: parseFloat(form.valor), conta_id: contaId });
+      adicionarTransacao({ ...form, razao: razaoFinal, valor: parseFloat(form.valor), conta_id: contaId });
     }
-    setForm({ razao: '', valor: '', tipo: 'saida', categoria: '❓ Outros' });
+    
+    // Limpar o formulário no final
+    setForm({ razao: '', valor: '', tipo: modoFutebol ? 'entrada' : 'saida', categoria: modoFutebol ? '👤 Eu' : '❓ Outros' });
   };
 
   const iniciarEdicao = (t) => {
@@ -203,10 +307,27 @@ function App() {
   if (!session) return <Login />;
   const contaAtiva = contas.find(c => c.id === contaId);
 
+  const mostrarRazao = !modoFutebol || form.categoria.includes('Outro');
+
+  // A app decide qual lista usar com base no email!
+  const listaOpcoesAtual = modoFutebol ? listaPessoalFutebol : listaCategorias;
+
   return (
     <div className="container" style={{ position: 'relative' }}>
-      <Sidebar menuAberto={menuAberto} setMenuAberto={setMenuAberto} contas={contas} contaId={contaId} mudarConta={(id) => { setContaId(id); setMenuAberto(false); }} apagarConta={apagarConta} criarNovaConta={criarNovaConta} temaEscuro={temaEscuro} setTemaEscuro={setTemaEscuro} saldos={saldosContas} />
-      <Header email={session.user.email} nomeConta={contaAtiva ? contaAtiva.nome : 'A carregar...'} saldoTotal={saldoTotal} setMenuAberto={setMenuAberto} mesAtivo={mesAtivo} setMesAtivo={setMesAtivo} anoAtivo={anoAtivo} setAnoAtivo={setAnoAtivo} nomeMeses={nomeMeses} verTodos={verTodos} setVerTodos={setVerTodos} />
+      <Sidebar 
+        menuAberto={menuAberto} 
+        setMenuAberto={setMenuAberto} 
+        contas={contas} 
+        contaId={contaId} 
+        mudarConta={(id) => { setContaId(id); setMenuAberto(false); }} 
+        apagarConta={apagarConta} 
+        renomearConta={renomearConta} 
+        criarNovaConta={criarNovaConta} 
+        saldos={saldosContas} 
+        moeda={moeda} 
+        abrirDefinicoes={() => { setMenuAberto(false); setModalDefinicoes(true); }} 
+      />
+      <Header email={session.user.email} nomeConta={contaAtiva ? contaAtiva.nome : 'A carregar...'} saldoTotal={saldoTotal} setMenuAberto={setMenuAberto} mesAtivo={mesAtivo} setMesAtivo={setMesAtivo} anoAtivo={anoAtivo} setAnoAtivo={setAnoAtivo} nomeMeses={nomeMeses} verTodos={verTodos} setVerTodos={setVerTodos} moeda={moeda} />
 
       <div className="transacoes" style={{ display: 'flex', flexDirection: 'column', padding: 0 }}>
         <div style={{ display: 'flex', borderBottom: '1px solid #e5e7eb', backgroundColor: 'white' }}>
@@ -240,6 +361,12 @@ function App() {
                     <div>
                       <span style={{ display: 'block', fontWeight: 'bold' }}>{t.razao}</span>
                       <span style={{ fontSize: '12px', color: '#6b7280' }}>{t.categoria || '❓ Outros'}</span>
+                      {/* --- NOVA DATA EM BAIXO PARA O FUTEBOL --- */}
+                      {modoFutebol && (
+                        <span style={{ display: 'block', fontSize: '11px', color: '#9ca3af', marginTop: '3px' }}>
+                          📅 {new Date(t.created_at).toLocaleDateString('pt-PT')}
+                        </span>
+                      )}
                     </div>
                     <div className="valor-e-acoes">
                       <strong className={t.tipo}>{t.tipo === 'entrada' ? '+' : '-'} {t.valor.toFixed(2)}€</strong>
@@ -254,14 +381,22 @@ function App() {
             </>
           ) : (
             <div className="area-estatisticas">
-              <h3 style={{ marginBottom: '15px', color: '#374151', textAlign: 'center' }}>Total Gasto: <span style={{ color: '#ef4444' }}>{totalDespesas.toFixed(2)}€</span></h3>
+              <h3 style={{ marginBottom: '15px', color: '#374151', textAlign: 'center' }}>
+                {modoFutebol ? 'Total Recebido: ' : 'Total Gasto: '} 
+                <span style={{ color: modoFutebol ? '#10b981' : '#ef4444' }}>
+                  {totalDespesas.toFixed(2)}€
+                </span>
+              </h3>
+              
               {estatisticas.length > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', gap: '10px' }}>
                   <button onClick={() => setVistaEstatisticas('barras')} style={{ padding: '6px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontWeight: 'bold', backgroundColor: vistaEstatisticas === 'barras' ? '#3b82f6' : 'transparent', color: vistaEstatisticas === 'barras' ? 'white' : '#6b7280' }}>📊 Barras</button>
                   <button onClick={() => setVistaEstatisticas('circular')} style={{ padding: '6px 16px', borderRadius: '20px', border: 'none', cursor: 'pointer', fontWeight: 'bold', backgroundColor: vistaEstatisticas === 'circular' ? '#3b82f6' : 'transparent', color: vistaEstatisticas === 'circular' ? 'white' : '#6b7280' }}>🍕 Circular</button>
                 </div>
               )}
-              {estatisticas.length === 0 ? <p style={{textAlign:'center', color:'#9ca3af'}}>Sem despesas.</p> : vistaEstatisticas === 'barras' ? (
+              
+              {/* Muda o texto de vazio também! */}
+              {estatisticas.length === 0 ? <p style={{textAlign:'center', color:'#9ca3af'}}>{modoFutebol ? 'Ainda ninguém pagou.' : 'Sem despesas.'}</p> : vistaEstatisticas === 'barras' ? (
                 estatisticas.map((cat, i) => {
                   const percentagem = ((cat.total / totalDespesas) * 100).toFixed(1);
                   return (
@@ -277,13 +412,58 @@ function App() {
       </div>
 
       <form className="area-input" onSubmit={handleSubmit} style={movimentoEmEdicao ? { backgroundColor: temaEscuro ? '#4b5563' : '#fef3c7', transition: '0.3s' } : { transition: '0.3s' }}>
-        <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})}><option value="saida">-</option><option value="entrada">+</option></select>
-        <input type="text" placeholder="Razão" value={form.razao} onChange={e => setForm({...form, razao: e.target.value})} required />
-        <select value={form.categoria} onChange={e => setForm({...form, categoria: e.target.value})} style={{ maxWidth: '130px' }}>{listaCategorias.map(cat => <option key={cat} value={cat}>{cat}</option>)}</select>
-        <input type="number" step="0.01" min="0.01" placeholder="0.00" value={form.valor} onChange={e => setForm({...form, valor: e.target.value})} required style={{ maxWidth: '80px' }} />
-        <button type="submit" id="botao-enviar" style={{ backgroundColor: movimentoEmEdicao ? '#f59e0b' : '#3b82f6', transition: '0.3s' }}>{movimentoEmEdicao ? '💾' : 'OK'}</button>
+        
+        {/* SINAL DE + OU - */}
+        <select value={form.tipo} onChange={e => setForm({...form, tipo: e.target.value})}>
+          <option value="saida">-</option>
+          <option value="entrada">+</option>
+        </select>
+        
+        {/* CAIXA DA RAZÃO (Com Flex 2 para ocupar a maior parte quando visível) */}
+        {mostrarRazao && (
+          <input 
+            type="text" 
+            placeholder={modoFutebol ? "Especifica a razão..." : "Razão"} 
+            value={form.razao} 
+            onChange={e => setForm({...form, razao: e.target.value})} 
+            required={mostrarRazao}
+            style={{ flex: 2 }} 
+          />
+        )}
+
+        {/* CAIXA DA CATEGORIA / PESSOA (Flex 1 estica e partilha o espaço) */}
+        <select 
+          value={form.categoria} 
+          onChange={e => setForm({...form, categoria: e.target.value})} 
+          style={{ flex: 1, minWidth: '100px' }}
+        >
+          {listaOpcoesAtual.map(opcao => <option key={opcao} value={opcao}>{opcao}</option>)}
+        </select>
+
+        {/* CAIXA DO VALOR (Quando a razão some, estica para 100% do seu lado e centra o texto) */}
+        <input 
+          type="number" 
+          step="0.01" min="0.01" 
+          placeholder="0.00" 
+          value={form.valor} 
+          onChange={e => setForm({...form, valor: e.target.value})} 
+          required 
+          style={{ 
+            flex: 1, 
+            maxWidth: mostrarRazao ? '85px' : '100%', 
+            textAlign: mostrarRazao ? 'left' : 'center' 
+          }} 
+        />
+        
+        {/* BOTÕES */}
+        <button type="submit" id="botao-enviar" style={{ backgroundColor: movimentoEmEdicao ? '#f59e0b' : '#3b82f6', transition: '0.3s' }}>
+          {movimentoEmEdicao ? '💾' : 'OK'}
+        </button>
+        
         {movimentoEmEdicao && (
-          <button type="button" onClick={() => { setMovimentoEmEdicao(null); setForm({ razao: '', valor: '', tipo: 'saida', categoria: '❓ Outros' }); }} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '0 12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>X</button>
+          <button type="button" onClick={() => { setMovimentoEmEdicao(null); setForm({ razao: '', valor: '', tipo: modoFutebol ? 'entrada' : 'saida', categoria: modoFutebol ? '👤 Eu' : '❓ Outros' }); }} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '0 12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>
+            X
+          </button>
         )}
       </form>
 
@@ -298,16 +478,29 @@ function App() {
         </div>
       )}
 
+      {/* MODAL REUTILIZÁVEL: NOVA CONTA / RENOMEAR */}
       {modalNovaConta && (
-        <div className="modal-overlay" onClick={() => setModalNovaConta(false)}>
+        <div className="modal-overlay" onClick={() => { setModalNovaConta(false); setIdContaRenomear(null); }}>
           <div className="modal-box" onClick={e => e.stopPropagation()}>
-            <h3>Nova Conta</h3>
-            <p>Dá um nome à tua nova carteira ou conta.</p>
-            <form onSubmit={confirmarNovaConta}>
-              <input autoFocus type="text" placeholder="Ex: Poupanças" value={nomeNovaConta} onChange={e => setNomeNovaConta(e.target.value)} required />
+            <h3>{idContaRenomear ? 'Renomear Conta' : 'Nova Conta'}</h3>
+            <p>{idContaRenomear ? 'Altera o nome da tua carteira:' : 'Dá um nome à tua nova carteira ou conta.'}</p>
+            
+            <form onSubmit={confirmarAcaoConta}>
+              <input 
+                autoFocus 
+                type="text" 
+                placeholder="Ex: Poupanças" 
+                value={nomeNovaConta} 
+                onChange={e => setNomeNovaConta(e.target.value)} 
+                required 
+              />
               <div className="modal-botoes">
-                <button type="button" className="btn-cancelar" onClick={() => setModalNovaConta(false)}>Cancelar</button>
-                <button type="submit" className="btn-confirmar">Criar Conta</button>
+                <button type="button" className="btn-cancelar" onClick={() => { setModalNovaConta(false); setIdContaRenomear(null); }}>
+                  Cancelar
+                </button>
+                <button type="submit" className="btn-confirmar">
+                  {idContaRenomear ? 'Guardar Alteração' : 'Criar Conta'}
+                </button>
               </div>
             </form>
           </div>
@@ -322,6 +515,51 @@ function App() {
             <div className="modal-botoes">
               <button type="button" className="btn-cancelar" onClick={() => setModalApagar({ aberto: false, id: null, nome: '' })}>Cancelar</button>
               <button type="button" className="btn-perigo" onClick={confirmarApagar}>Sim, Apagar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NOVO MODAL: DEFINIÇÕES */}
+      {modalDefinicoes && (
+        <div className="modal-overlay" onClick={() => setModalDefinicoes(false)}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <h3 style={{ marginBottom: '20px' }}>⚙️ Definições</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              
+              {/* 2. MOEDA PADRÃO */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '15px', borderBottom: '1px solid #e5e7eb' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '15px', color: temaEscuro ? '#f9fafb' : '#374151' }}>
+                  💱 Moeda Padrão
+                </span>
+                <select 
+                  value={moeda} 
+                  onChange={e => setMoeda(e.target.value)}
+                  style={{ padding: '6px 12px', borderRadius: '8px', border: '1px solid #d1d5db', outline: 'none', backgroundColor: temaEscuro ? '#374151' : 'white', color: temaEscuro ? 'white' : 'black' }}
+                >
+                  <option value="€">Euro (€)</option>
+                  <option value="$">Dólar ($)</option>
+                  <option value="R$">Real (R$)</option>
+                  <option value="£">Libra (£)</option>
+                </select>
+              </div>
+
+              {/* 3. TEMA ESCURO */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '15px', color: temaEscuro ? '#f9fafb' : '#374151' }}>
+                  {temaEscuro ? '🌙 Modo Escuro' : '☀️ Modo Claro'}
+                </span>
+                <label className="toggle-switch">
+                  <input type="checkbox" checked={temaEscuro} onChange={() => setTemaEscuro(!temaEscuro)} />
+                  <span className="slider round"></span>
+                </label>
+              </div>
+
+            </div>
+
+            <div className="modal-botoes" style={{ marginTop: '25px' }}>
+              <button type="button" className="btn-cancelar" style={{width: '100%'}} onClick={() => setModalDefinicoes(false)}>Fechar</button>
             </div>
           </div>
         </div>

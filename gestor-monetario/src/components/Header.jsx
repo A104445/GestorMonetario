@@ -11,7 +11,8 @@ export function Header({
     setAnoAtivo,
     nomeMeses,
     verTodos,
-    setVerTodos
+    setVerTodos,
+    moeda
   }) {
     return (
       <div className="cabecalho">
@@ -21,7 +22,7 @@ export function Header({
         </div>
         
         <h1>{nomeConta}</h1>
-        <h2>{saldoTotal.toFixed(2)}€</h2>
+        <h2>{saldoTotal.toFixed(2)}{moeda}</h2>
   
         {/* SELETOR DE MÊS E BOTÃO 'VER TODOS' */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginTop: '15px' }}>

@@ -693,3 +693,49 @@ body.dark .input-pesquisa:focus {
 body.dark .saldo-conta {
   color: #9ca3af;
 }
+
+.sidebar-footer {
+  margin-top: auto;
+  border-top: 1px solid #f3f4f6;
+  padding: 10px 0;
+}
+
+body.dark .sidebar-footer {
+  border-top-color: #374151;
+}
+
+.footer-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 20px;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.btn-logout {
+  width: 100%;
+  padding: 15px 20px;
+  background: none;
+  border: none;
+  color: #ef4444; /* Vermelho */
+  text-align: left;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: 0.2s;
+}
+
+.btn-logout:hover {
+  background-color: #fee2e2;
+}
+
+body.dark .btn-logout:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
+.icone-logout {
+  font-size: 18px;
+}
