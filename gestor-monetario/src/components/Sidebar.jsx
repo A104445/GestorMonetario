@@ -2,7 +2,8 @@ import { supabase } from '../services/supabase';
 
 export function Sidebar({ 
   menuAberto, setMenuAberto, contas, contaId, mudarConta, 
-  apagarConta, renomearConta, criarNovaConta, saldos, abrirDefinicoes, moeda 
+  apagarConta, renomearConta, criarNovaConta, saldos, abrirDefinicoes, moeda,
+  contasGuardadas, trocarDeEmail, emailAtual, adicionarNovoPerfil, pedirRemocaoPerfil
 }) {
 
   const handleLogout = async () => {
@@ -25,7 +26,7 @@ export function Sidebar({
           </div>
         </div>
 
-        {/* LISTA DE CONTAS COM O LÁPIS */}
+        {/* LISTA DE CARTEIRAS (DA SESSÃO ATUAL) */}
         <div className="lista-contas">
           {contas.map(conta => (
             <div 
@@ -40,6 +41,7 @@ export function Sidebar({
                   <button 
                     onClick={(e) => { e.stopPropagation(); renomearConta(conta.id, conta.nome); }}
                     style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '13px', opacity: 0.7 }}
+                    title="Editar Nome da Conta"
                   >
                     ✏️
                   </button>
@@ -58,6 +60,71 @@ export function Sidebar({
             </div>
           ))}
         </div>
+
+        {/* SECÇÃO PERFIS GUARDADOS */}
+        {contasGuardadas && (
+          <div style={{ padding: '15px 20px', borderTop: '1px solid #f3f4f6', backgroundColor: 'rgba(0,0,0,0.02)' }}>
+            <p style={{ fontSize: '11px', fontWeight: 'bold', color: '#9ca3af', marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Perfis Guardados
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              
+              {/* LISTA OS OUTROS EMAILS COM BOTÃO DE REMOVER */}
+              {contasGuardadas.map(conta => (
+                conta.email !== emailAtual && (
+                  <div key={conta.email} style={{ display: 'flex', gap: '5px' }}>
+                    
+                    {/* BOTÃO DE TROCAR (Ocupa o espaço quase todo) */}
+                    <button 
+                      onClick={() => trocarDeEmail(conta)}
+                      title={conta.email}
+                      style={{ 
+                        flex: 1, padding: '10px', background: 'white', border: '1px solid #e5e7eb', 
+                        borderRadius: '8px', textAlign: 'left', fontSize: '13px', color: '#374151', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 'bold',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        overflow: 'hidden'
+                      }}
+                    >
+                      <span style={{ fontSize: '16px', flexShrink: 0 }}>🔄</span> 
+                      <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {conta.email}
+                      </span>
+                    </button>
+
+                    {/* NOVO BOTÃO DE REMOVER */}
+                    <button
+                      onClick={() => pedirRemocaoPerfil(conta.email)} // <-- Muda isto!
+                      title="Remover Perfil"
+                      style={{
+                        padding: '0 12px', background: '#fee2e2', border: '1px solid #fca5a5',
+                        borderRadius: '8px', color: '#ef4444', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontWeight: 'bold', fontSize: '14px', transition: '0.2s'
+                      }}
+                    >
+                      X
+                    </button>
+                    
+                  </div>
+                )
+              ))}
+
+              {/* BOTÃO PARA ADICIONAR NOVO EMAIL (SEM APAGAR OS OUTROS) */}
+              <button 
+                onClick={adicionarNovoPerfil}
+                style={{ 
+                  width: '100%', padding: '10px', background: 'transparent', border: '1px dashed #9ca3af', 
+                  borderRadius: '8px', textAlign: 'center', fontSize: '13px', color: '#6b7280', cursor: 'pointer',
+                  fontWeight: 'bold', marginTop: contasGuardadas.length > 1 ? '5px' : '0'
+                }}
+              >
+                + Adicionar Outro E-mail
+              </button>
+
+            </div>
+          </div>
+        )}
 
         {/* RODAPÉ COM O TERMINAR SESSÃO */}
         <div className="sidebar-footer" style={{ marginTop: 'auto', borderTop: '1px solid #f3f4f6', padding: '20px' }}>

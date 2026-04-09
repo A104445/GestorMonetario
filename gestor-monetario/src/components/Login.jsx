@@ -5,6 +5,7 @@ export function Login() {
   const [abaAtiva, setAbaAtiva] = useState('login'); // Pode ser 'login' ou 'registo'
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [mostrarPassword, setMostrarPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const [errorMsg, setErrorMsg] = useState(''); 
@@ -100,16 +101,38 @@ export function Login() {
             />
           </div>
           
-          <div className="input-grupo">
+          <div className="input-grupo" style={{ position: 'relative' }}>
             <span className="input-icone">🔒</span>
-            <input 
-              type="password" 
-              placeholder="A tua Senha (mín. 6 letras)" 
+            
+            <input
+              type={mostrarPassword ? "text" : "password"}
+              placeholder="Password"
               value={password}
-              onChange={e => setPassword(e.target.value)} 
+              onChange={(e) => setPassword(e.target.value)}
               required
-              minLength="6"
+              style={{ paddingRight: '40px' }} /* Dá espaço à direita para o texto não ficar debaixo do emoji */
             />
+            
+            {/* BOTÃO DO OLHO */}
+            <button
+              type="button"
+              onClick={() => setMostrarPassword(!mostrarPassword)}
+              style={{
+                position: 'absolute',
+                right: '10px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '18px',
+                padding: 0,
+                opacity: 0.7
+              }}
+              title={mostrarPassword ? "Esconder Password" : "Mostrar Password"}
+            >
+              {mostrarPassword ? '🙈' : '👁️'}
+            </button>
           </div>
           
           <button type="submit" className="btn-principal" disabled={loading}>

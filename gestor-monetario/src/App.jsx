@@ -18,6 +18,7 @@ function App() {
   const [nomeNovaConta, setNomeNovaConta] = useState('');
   const [modalApagar, setModalApagar] = useState({ aberto: false, id: null, nome: '' });
   const [modalDefinicoes, setModalDefinicoes] = useState(false);
+  const [modalRemoverPerfil, setModalRemoverPerfil] = useState({ aberto: false, email: '' });
 
   const { transacoes, carregando, adicionarTransacao, removerTransacao, editarTransacao } = useFinance(contaId);
   const [form, setForm] = useState({ razao: '', valor: '', tipo: 'saida', categoria: '❓ Outros' });
@@ -31,6 +32,81 @@ function App() {
     }
   }, [modoFutebol]);
   
+  // No topo do App.jsx, junto aos outros estados
+  const [contasGuardadas, setContasGuardadas] = useState(() => {
+    const guardadas = localStorage.getItem('sessoes_monetario');
+    return guardadas ? JSON.parse(guardadas) : [];
+  });
+
+  // Função para guardar a sessão atual na lista de "Contas Guardadas"
+  useEffect(() => {
+    if (session) {
+      const novaLista = [...contasGuardadas];
+      const index = novaLista.findIndex(item => item.email === session.user.email);
+      
+      // Guardamos o access_token e refresh_token para poder voltar a entrar
+      const dadosSessao = {
+        email: session.user.email,
+        access_token: session.access_token,
+        refresh_token: session.refresh_token
+      };
+
+      if (index > -1) {
+        novaLista[index] = dadosSessao;
+      } else {
+        novaLista.push(dadosSessao);
+      }
+      
+      setContasGuardadas(novaLista);
+      localStorage.setItem('sessoes_monetario', JSON.stringify(novaLista));
+    }
+  }, [session]);
+
+  // A FUNÇÃO MÁGICA: Troca de conta tipo Clash Royale
+  async function trocarDeEmail(dadosConta) {
+    const { error } = await supabase.auth.setSession({
+      access_token: dadosConta.access_token,
+      refresh_token: dadosConta.refresh_token
+    });
+
+    if (error) {
+      setAvisoMsg("A sessão expirou. Por favor, faz login novamente.");
+      // Se der erro (sessão expirada), removemos da lista
+      const novaLista = contasGuardadas.filter(c => c.email !== dadosConta.email);
+      setContasGuardadas(novaLista);
+      localStorage.setItem('sessoes_monetario', JSON.stringify(novaLista));
+    } else {
+      setMenuAberto(false);
+    }
+  }
+
+  // --- NOVA FUNÇÃO: ADICIONAR PERFIL (Sem destruir a chave do servidor) ---
+  function adicionarNovoPerfil() {
+    // 1. Limpamos a chave do Supabase apenas do teu ecrã (para aparecer a janela de Login)
+    for (let key in localStorage) {
+      if (key.startsWith('sb-') && key.endsWith('-auth-token')) {
+        localStorage.removeItem(key);
+      }
+    }
+    // 2. Escondemos a sessão do React, mas o servidor continua a achar que ela é válida!
+    setSession(null);
+    setMenuAberto(false);
+  }
+
+  // 1. O botão "X" chama esta função para abrir a janela
+  function pedirRemocaoPerfil(emailParaRemover) {
+    setModalRemoverPerfil({ aberto: true, email: emailParaRemover });
+    setMenuAberto(false); // Fecha o menu lateral para veres bem a janela
+  }
+
+  // 2. Se clicares no botão "Sim" dentro da janela, apaga mesmo!
+  function confirmarRemocaoPerfil() {
+    const novaLista = contasGuardadas.filter(c => c.email !== modalRemoverPerfil.email);
+    setContasGuardadas(novaLista);
+    localStorage.setItem('sessoes_monetario', JSON.stringify(novaLista));
+    setModalRemoverPerfil({ aberto: false, email: '' }); // Fecha a janela
+  }
+
   const [movimentoEmEdicao, setMovimentoEmEdicao] = useState(null);
   
   // --- NOVO: ESTADO DA PESQUISA ---
@@ -129,12 +205,19 @@ function App() {
     
     if (data && data.length > 0) { 
       setContas(data); 
-      if (!contaId) setContaId(data[0].id); 
+      
+      // --- O TRUQUE MÁGICO DA ATUALIZAÇÃO ---
+      // Verifica se a carteira que estava aberta ainda pertence a este novo e-mail
+      const carteiraAindaExiste = data.find(c => c.id === contaId);
+      
+      // Se não pertencer (porque trocaste de perfil), força a carregar a 1ª carteira deste novo perfil!
+      if (!carteiraAindaExiste) {
+        setContaId(data[0].id); 
+      }
     } else {
       if (criandoConta.current) return;
       criandoConta.current = true;
 
-      // Mantemos o nome padrão original para todas as contas novas!
       const { data: novaConta } = await supabase.from('contas').insert([{ user_id: session.user.id, nome: 'Carteira Principal' }]).select().single();
       
       if (novaConta) { 
@@ -235,6 +318,12 @@ const estatisticas = Object.entries(transacoesVisiveis.filter(t => t.tipo === ti
 
 const totalDespesas = estatisticas.reduce((acc, cat) => acc + cat.total, 0);
 
+  // --- NOVA MATEMÁTICA: INSIGHTS INTELIGENTES ---
+  const transacoesDoTipo = transacoesVisiveis.filter(t => t.tipo === tipoEstatistica);
+  const maiorTransacao = transacoesDoTipo.length > 0 
+    ? transacoesDoTipo.reduce((max, t) => t.valor > max.valor ? t : max, transacoesDoTipo[0]) 
+    : null;
+
   // Formulário
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -326,6 +415,11 @@ const totalDespesas = estatisticas.reduce((acc, cat) => acc + cat.total, 0);
         saldos={saldosContas} 
         moeda={moeda} 
         abrirDefinicoes={() => { setMenuAberto(false); setModalDefinicoes(true); }} 
+        contasGuardadas={contasGuardadas}
+        trocarDeEmail={trocarDeEmail}
+        emailAtual={session?.user?.email}
+        adicionarNovoPerfil={adicionarNovoPerfil}
+        pedirRemocaoPerfil={pedirRemocaoPerfil}
       />
       <Header email={session.user.email} nomeConta={contaAtiva ? contaAtiva.nome : 'A carregar...'} saldoTotal={saldoTotal} setMenuAberto={setMenuAberto} mesAtivo={mesAtivo} setMesAtivo={setMesAtivo} anoAtivo={anoAtivo} setAnoAtivo={setAnoAtivo} nomeMeses={nomeMeses} verTodos={verTodos} setVerTodos={setVerTodos} moeda={moeda} />
 
@@ -384,9 +478,26 @@ const totalDespesas = estatisticas.reduce((acc, cat) => acc + cat.total, 0);
               <h3 style={{ marginBottom: '15px', color: '#374151', textAlign: 'center' }}>
                 {modoFutebol ? 'Total Recebido: ' : 'Total Gasto: '} 
                 <span style={{ color: modoFutebol ? '#10b981' : '#ef4444' }}>
-                  {totalDespesas.toFixed(2)}€
+                  {totalDespesas.toFixed(2)}{moeda}
                 </span>
               </h3>
+              
+              {/* --- NOVO: CAIXA DE INSIGHTS INTELIGENTES --- */}
+              {estatisticas.length > 0 && (
+                <div style={{ 
+                  backgroundColor: temaEscuro ? '#374151' : '#f0fdf4', 
+                  border: `1px solid ${temaEscuro ? '#4b5563' : '#bbf7d0'}`, 
+                  padding: '15px', borderRadius: '12px', marginBottom: '25px', 
+                  fontSize: '13.5px', color: temaEscuro ? '#d1d5db' : '#166534',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.02)'
+                }}>
+                  {maiorTransacao && (
+                    <p style={{ margin: 0 }}>
+                      🏆 <strong>Movimento de Destaque:</strong> O registo mais alto foi "{maiorTransacao.razao}" no valor de {maiorTransacao.valor.toFixed(2)}{moeda}.
+                    </p>
+                  )}
+                </div>
+              )}
               
               {estatisticas.length > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '25px', gap: '10px' }}>
@@ -515,6 +626,22 @@ const totalDespesas = estatisticas.reduce((acc, cat) => acc + cat.total, 0);
             <div className="modal-botoes">
               <button type="button" className="btn-cancelar" onClick={() => setModalApagar({ aberto: false, id: null, nome: '' })}>Cancelar</button>
               <button type="button" className="btn-perigo" onClick={confirmarApagar}>Sim, Apagar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: CONFIRMAR REMOÇÃO DE PERFIL */}
+      {modalRemoverPerfil.aberto && (
+        <div className="modal-overlay" onClick={() => setModalRemoverPerfil({ aberto: false, email: '' })}>
+          <div className="modal-box" onClick={e => e.stopPropagation()}>
+            <h3>Remover Perfil</h3>
+            <p>Tens a certeza que queres remover o perfil <strong>{modalRemoverPerfil.email}</strong> deste dispositivo?</p>
+            <p style={{ fontSize: '13px', color: '#6b7280', marginTop: '10px' }}>O teu dinheiro não será apagado, mas terás de introduzir a password novamente para voltar a aceder.</p>
+            
+            <div className="modal-botoes" style={{ marginTop: '20px' }}>
+              <button type="button" className="btn-cancelar" onClick={() => setModalRemoverPerfil({ aberto: false, email: '' })}>Cancelar</button>
+              <button type="button" className="btn-perigo" onClick={confirmarRemocaoPerfil}>Sim, Remover</button>
             </div>
           </div>
         </div>
