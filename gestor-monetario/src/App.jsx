@@ -117,8 +117,9 @@ function App() {
 
   // --- NOVA LISTA: O PESSOAL DO FUTEBOL ---
   const listaPessoalFutebol = [
-    '👤 Eu', '👤 João', '👤 Diogo', '👤 Rui', '👤 Miguel', 
-    '👤 Pedro', '👤 Carlos', '⚽ Aluguer Campo', '❓ Outros'
+    '👤 Alex', '👤 Tiago Cardoso', '👤 Pedro', '👤 Rodrigo', '👤 Goncalo', '👤 Feliciano', '👤 Eva',
+    '👤 Miguel', '👤 Diogo Costa', '👤 Diogo Oliveira', '👤 Tiaguinho', '👤 Ulisses', '👤 Cesar', '👤 Luis', 
+    '⚽ Aluguer Campo', '❓ Outros'
   ];
 
   const [mesAtivo, setMesAtivo] = useState(new Date().getMonth());
