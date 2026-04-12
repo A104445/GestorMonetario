@@ -573,7 +573,7 @@ const totalDespesas = estatisticas.reduce((acc, cat) => acc + cat.total, 0);
         </button>
         
         {movimentoEmEdicao && (
-          <button type="button" onClick={() => { setMovimentoEmEdicao(null); setForm({ razao: '', valor: '', tipo: modoFutebol ? 'entrada' : 'saida', categoria: modoFutebol ? '👤 Eu' : '❓ Outros' }); }} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '0 12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>
+          <button type="button" onClick={() => { setMovimentoEmEdicao(null); setForm({ razao: '', valor: '', tipo: modoFutebol ? 'entrada' : 'saida', categoria: '❓ Outros' }); }} style={{ backgroundColor: '#ef4444', color: 'white', border: 'none', padding: '0 12px', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold' }}>
             X
           </button>
         )}
