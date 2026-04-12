@@ -348,7 +348,7 @@ const totalDespesas = estatisticas.reduce((acc, cat) => acc + cat.total, 0);
     }
     
     // Limpar o formulário no final
-    setForm({ razao: '', valor: '', tipo: modoFutebol ? 'entrada' : 'saida', categoria: modoFutebol ? '👤 Eu' : '❓ Outros' });
+    setForm({ razao: '', valor: '', tipo: modoFutebol ? 'entrada' : 'saida', categoria: '❓ Outros' });
   };
 
   const iniciarEdicao = (t) => {
